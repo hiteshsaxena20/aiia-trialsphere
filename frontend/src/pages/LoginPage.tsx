@@ -2,15 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api';
 import { useAuth } from '../AuthContext';
+import type { User } from '../AuthContext';
 import { Mail, Activity, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
-
-const ROLE_PROFILES: Record<string, { id: number; name: string; email: string; role: string; title: string }> = {
-  'admin@aiia.gov.in': { id: 1, name: 'Dr. Rajesh Sharma', email: 'admin@aiia.gov.in', role: 'ADMIN', title: 'Director & CTMS Admin' },
-  'pi1@aiia.gov.in': { id: 2, name: 'Dr. Ananya Mishra', email: 'pi1@aiia.gov.in', role: 'PI', title: 'Principal Investigator' },
-  'coord1@aiia.gov.in': { id: 3, name: 'Pooja Verma', email: 'coord1@aiia.gov.in', role: 'STUDY_COORDINATOR', title: 'Lead Study Coordinator' },
-  'pv@aiia.gov.in': { id: 4, name: 'Dr. Suresh Nair', email: 'pv@aiia.gov.in', role: 'PV_OFFICER', title: 'Pharmacovigilance Officer' },
-  'mgmt@aiia.gov.in': { id: 5, name: 'Dr. Vikram Seth', email: 'mgmt@aiia.gov.in', role: 'MANAGEMENT', title: 'Institutional Dean & Oversight' },
-};
+import { MOCK_USERS } from '../mockData';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('admin@aiia.gov.in');
@@ -20,37 +14,40 @@ export default function LoginPage() {
 
   async function handleLogin(targetEmail?: string) {
     setLoading(true);
-    const selectedEmail = targetEmail || email || 'admin@aiia.gov.in';
+    const selectedEmail = (targetEmail || email || 'admin@aiia.gov.in').trim();
 
     try {
-      // Attempt backend login if available, otherwise seamlessly log in directly
-      const res = await authApi.login(selectedEmail, 'Admin@123');
-      login(res.data.user, res.data.access_token);
+      const res = await authApi.login(selectedEmail);
+      if (res?.data?.user && res?.data?.access_token) {
+        login(res.data.user, res.data.access_token);
+        navigate('/');
+        return;
+      }
     } catch {
-      // Bypassed: instant frontend login without any password check
-      const profile = ROLE_PROFILES[selectedEmail] || {
-        id: Math.floor(Math.random() * 1000) + 10,
-        name: selectedEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-        email: selectedEmail,
-        role: selectedEmail.includes('admin')
-          ? 'ADMIN'
-          : selectedEmail.includes('pi')
-          ? 'PI'
-          : selectedEmail.includes('pv')
-          ? 'PV_OFFICER'
-          : selectedEmail.includes('coord')
-          ? 'STUDY_COORDINATOR'
-          : 'ADMIN',
-        title: 'TrialSphere Member',
-      };
-      login(
-        { id: profile.id, name: profile.name, email: profile.email, role: profile.role },
-        'demo_token_' + btoa(selectedEmail + '_' + Date.now())
-      );
-    } finally {
-      setLoading(false);
-      navigate('/');
+      // ignore
     }
+
+    // Direct fallback login
+    const matched = MOCK_USERS.find((u) => u.email.toLowerCase() === selectedEmail.toLowerCase());
+    const fallbackUser: User = matched || {
+      id: Math.floor(Math.random() * 1000) + 10,
+      name: selectedEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      email: selectedEmail,
+      role: selectedEmail.includes('admin')
+        ? 'ADMIN'
+        : selectedEmail.includes('pi')
+        ? 'PI'
+        : selectedEmail.includes('pv')
+        ? 'PV_OFFICER'
+        : selectedEmail.includes('coord')
+        ? 'STUDY_COORDINATOR'
+        : 'ADMIN',
+      title: 'TrialSphere Member',
+    };
+
+    login(fallbackUser, 'demo_token_' + btoa(selectedEmail + '_' + Date.now()));
+    setLoading(false);
+    navigate('/');
   }
 
   const quickRoles = [

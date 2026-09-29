@@ -73,11 +73,13 @@ const CUSTOM_TOOLTIP_STYLE = {
   color: '#f0f6ff',
 };
 
+import { MOCK_DASHBOARD_SUMMARY, MOCK_ENROLLMENT_TREND, MOCK_ALERTS } from '../mockData';
+
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<any>(null);
-  const [trend, setTrend] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<any>(MOCK_DASHBOARD_SUMMARY);
+  const [trend, setTrend] = useState<any[]>(MOCK_ENROLLMENT_TREND);
+  const [alerts, setAlerts] = useState<any[]>(MOCK_ALERTS);
+  const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   async function fetchAll() {
@@ -88,20 +90,23 @@ export default function DashboardPage() {
         dashboardApi.enrollmentTrend(),
         dashboardApi.recentAlerts(),
       ]);
-      setSummary(s.data);
-      setTrend(t.data);
-      setAlerts(a.data);
+      if (s?.data) setSummary(s.data);
+      if (t?.data) setTrend(t.data);
+      if (a?.data) setAlerts(a.data);
       setLastRefresh(new Date());
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
-  if (loading) return <div className="loading-screen"><div className="spinner" style={{ width: 32, height: 32 }} /><span>Loading dashboard data...</span></div>;
-  if (!summary) return null;
-
-  const { kpis, risk_distribution, safety, compliance, alerts_breakdown } = summary;
+  const data = summary || MOCK_DASHBOARD_SUMMARY;
+  const { kpis, risk_distribution, safety, compliance, alerts_breakdown } = data;
 
   const riskPieData = Object.entries(risk_distribution).map(([k, v]) => ({ name: k, value: v as number, color: RISK_COLORS[k as keyof typeof RISK_COLORS] }));
 
