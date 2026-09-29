@@ -1,39 +1,23 @@
 {
   "version": 2,
   "name": "aiia-trialsphere",
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
-  "framework": null,
   "builds": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python",
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
       "config": {
-        "maxLambdaSize": "50mb"
+        "distDir": "dist"
       }
-    },
-    {
-      "src": "frontend/dist/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/(.*\\.(js|css|ico|png|svg|json|woff|woff2|ttf))",
-      "dest": "/frontend/dist/$1"
+      "src": "/assets/(.*)",
+      "dest": "/frontend/dist/assets/$1"
     },
     {
       "src": "/(.*)",
       "dest": "/frontend/dist/index.html"
     }
-  ],
-  "env": {
-    "DATABASE_URL": "sqlite:////tmp/trialsphere.db",
-    "SECRET_KEY": "aiia-trialsphere-vercel-key-2026"
-  }
+  ]
 }
