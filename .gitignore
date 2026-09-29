@@ -1,0 +1,51 @@
+# AIIA TrialSphere — .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-log.txt
+
+# SQLite DB (will be re-seeded on deploy)
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Vercel
+.vercel/
