@@ -1,40 +1,43 @@
 """
-AIIA TrialSphere — Railway Startup Script
-Auto-seeds the database on first boot if empty.
+AIIA TrialSphere — Railway/Production Startup Script
+Auto-seeds the database on first boot, then starts uvicorn.
 """
 import os
 import sys
 import subprocess
 
+
 def check_and_seed():
-    """Run seed.py only if the database is empty (first boot)."""
+    """Seed only if SQLite DB is missing or empty."""
     db_path = "trialsphere.db"
-    
-    # Check if DB file exists and has data
-    if os.path.exists(db_path) and os.path.getsize(db_path) > 10000:
-        print("✓ Database already seeded, skipping seed.")
-        return
-    
-    print("🌱 First boot detected — seeding database with synthetic data...")
     try:
-        subprocess.run([sys.executable, "seed.py"], check=True, timeout=300)
-        print("✓ Database seeded successfully!")
+        size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+        if size < 10000:
+            print("🌱 First boot — seeding synthetic data...")
+            result = subprocess.run(
+                [sys.executable, "seed.py"],
+                check=True,
+                timeout=300,
+                capture_output=False
+            )
+            print("✓ Seed complete.")
+        else:
+            print(f"✓ DB already seeded ({size} bytes), skipping.")
     except Exception as e:
-        print(f"⚠ Seed failed: {e}. Starting anyway...")
+        print(f"⚠ Seed error (non-fatal): {e}")
+
 
 if __name__ == "__main__":
-    # Seed if needed
     check_and_seed()
-    
-    # Start the FastAPI server
+
     port = int(os.environ.get("PORT", 8000))
-    print(f"🚀 Starting AIIA TrialSphere API on port {port}...")
-    
+    print(f"🚀 Starting AIIA TrialSphere on 0.0.0.0:{port}")
+
     import uvicorn
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=port,
         reload=False,
-        workers=1,
+        log_level="info",
     )
